@@ -1,0 +1,21 @@
+
+## Importing data
+
+Loading data from package files:
+
+    $ pv .../Packages python | python load_packages.py
+
+Packages files can be obtained from Debian mirrors, and are cached by APT in
+/var/lib/apt/lists.
+
+Loading data from copyright files:
+
+    $ python load_copyright.py main/*/*/current/copyright | tee cp_import.log
+
+Unfortunately, I don't know of a way to easily and quickly get copyright files
+for all packages in main if you are not a Debian developer. I obtained them by
+logging into powell.debian.org (which hosts.packages.debian.org) and running:
+
+    $ cd /srv/packages.debian.org/www/changelogs/pool
+    $ tar -zchf ~/copyright.tar.gz main/*/*/current/copyright
+
