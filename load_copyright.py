@@ -28,9 +28,10 @@ def read_copyright(fh):
 
     files = []
     licences = []
-    file_fields = set([
-        'Authors', 'Files', 'Comment', 'Copyright', 'Disclaimer', 'Homepage',
-        'License', 'License-Alias', 'Upstream-Authors', 'X-Comment'])
+    #file_fields = set([
+    #    'Authors', 'Files', 'Comment', 'Copyright', 'Disclaimer', 'Homepage',
+    #    'License', 'License-Alias', 'Upstream-Authors', 'X-Comment',
+    #    'X-Notes'])
 
     for (type, d) in paras:
         type = type.replace('Licence', 'License')
@@ -44,8 +45,8 @@ def read_copyright(fh):
             if 'License' not in d:
                 raise ValueError('no license: ' + repr(d))
 
-            keys = set(d.keys())
-            assert keys <= file_fields, keys
+            #keys = set(d.keys())
+            #assert keys <= file_fields, keys
             files.append(d)
         elif type == 'License':
             # XXX constrain permissible keys here?
