@@ -69,17 +69,17 @@ def import_one(pkgname, fh):
         #print 'err:', repr(e)
         return None
 
-    header['Package'] = pkgname
+    header['_srcpkg'] = pkgname
     copy_summary = pd.DataFrame([header])
     #print copy_summary.T.to_string()
     #print
 
     for d in files:
-        d['Package'] = pkgname
+        d['_srcpkg'] = pkgname
         d['_license'] = d['License'].split('\n')[0]
 
     for d in licences:
-        d['Package'] = pkgname
+        d['_srcpkg'] = pkgname
         d['_license'] = d['License'].split('\n')[0]
 
     copy_files = pd.DataFrame(files)
