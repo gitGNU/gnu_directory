@@ -254,39 +254,43 @@ def output(path, xs):
         for x in xs:
             f.write(str(x) + '\n')
 
-def main():
-    data = PkgData()
-    args = sys.argv[1:]
+def export_all(data):
     outputdir = 'output'
 
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
 
+    # First, find all upstream names and the source packages corresponding
+    # to them.
+
+    unames = set(data.cps['Upstream-Name'].dropna())
+
+    for uname in unames:
+        if not uname:
+            continue
+
+        uname = uname.encode('utf8')
+        print uname
+        fname = os.path.join(outputdir, filename(uname))
+        output(fname, export(data, uname))
+
+    # For source packages with no upstream name, use the source package
+    # name as the upstream name.
+
+    no_uname = set(data.cps[
+        data.cps['Upstream-Name'].isnull()]['_srcpkg'])
+
+    for srcpkg in no_uname:
+        print srcpkg
+        fname = os.path.join(outputdir, filename(srcpkg))
+        output(fname, export_srcpkgs(data, srcpkg, [srcpkg]))
+
+def main():
+    data = PkgData()
+    args = sys.argv[1:]
+
     if len(args) == 0:
-        # First, find all upstream names and the source packages corresponding
-        # to them.
-
-        unames = set(data.cps['Upstream-Name'].dropna())
-
-        for uname in unames:
-            if not uname:
-                continue
-
-            uname = uname.encode('utf8')
-            print uname
-            fname = os.path.join(outputdir, filename(uname))
-            output(fname, export(data, uname))
-
-        # For source packages with no upstream name, use the source package
-        # name as the upstream name.
-
-        no_uname = set(data.cps[
-            data.cps['Upstream-Name'].isnull()]['_srcpkg'])
-
-        for srcpkg in no_uname:
-            print srcpkg
-            fname = os.path.join(outputdir, filename(srcpkg))
-            output(fname, export_srcpkgs(data, srcpkg, [srcpkg]))
+        export_all(data)
     elif len(args) == 1:
         # XXX: assumes argument is an upstream name
         for template in export(data, args[0]):
