@@ -164,16 +164,12 @@ def export_srcpkgs(data, name, srcpkg_names):
         return
 
     binpkg_names = sorted(binpkgs['Package'], key=len)
-    print binpkg_names
-    print list(binpkgs['Package'])
     homepages = list(binpkgs['Homepage'])
     # XXX: maybe choose the one that appears the most?
     homepage = homepages[0] if homepages else ''
     tags = set(concat(
         [parse_tags(t) for t in binpkgs['Tag'] if not pd.isnull(t)]))
-    print tags
     langs = [s.title() for s in extract_languages(tags)]
-    print langs
 
     if name in binpkg_names:
         descpkg = name
@@ -243,8 +239,6 @@ def export_srcpkgs(data, name, srcpkg_names):
 def export(data, name):
     pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
-    print name
-    print 'source packages:', srcpkg_names
     export_srcpkgs(data, name, srcpkg_names)
 
 def main():
