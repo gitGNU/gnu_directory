@@ -1,5 +1,6 @@
 # encoding: utf8
 
+import datetime
 import re
 import sys
 import textwrap
@@ -26,6 +27,9 @@ def concat(xss):
         all.extend(xs)
 
     return all
+
+def today():
+    return datetime.datetime.now().strftime('%Y-%m-%d')
 
 class Template(object):
     def __init__(self, name, values):
@@ -174,7 +178,9 @@ def export(pkgs, descs, cps, cpf, name):
         ('VCS checkout command', ''),
         ('Computer languages', ', '.join(langs)),
         ('Status', ''),
-        ('Is GNU', 'No')])
+        ('Is GNU', 'No'),
+        ('Submitted by', 'Debian import'),
+        ('Submitted date', today())])
 
     people = []
     res = []
