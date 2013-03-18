@@ -1,6 +1,7 @@
 # encoding: utf8
 
 import datetime
+import os
 import re
 import sys
 import textwrap
@@ -184,7 +185,7 @@ def export_srcpkgs(data, name, srcpkg_names):
     (short_desc, full_desc) = desc.split('\n', 1)
     full_desc = munge_description(full_desc)
 
-    print Template('Entry', [
+    yield Template('Entry', [
         ('Name', name.capitalize()),
         ('Short description', short_desc),
         ('Full description', full_desc),
@@ -199,7 +200,7 @@ def export_srcpkgs(data, name, srcpkg_names):
         ('Submitted by', 'Debian import'),
         ('Submitted date', today())])
 
-    print Template('Import', [
+    yield Template('Import', [
         ('Source', 'Debian'),
         ('Source link',
             'http://packages.debian.org/sid/' + srcpkg_names[0]),
@@ -222,28 +223,44 @@ def export_srcpkgs(data, name, srcpkg_names):
 
         for template in srcpkg_extract_licenses(pkg_cps, pkg_cpf):
             # XXX: eliminate duplicates
-            print template
+            yield template
 
     for template in people:
         # XXX: eliminate duplicates
-        print template
+        yield template
 
     for template in res:
         # XXX: eliminate duplicates
-        print template
+        yield template
 
-    #print Template('Software category', [
+    #yield Template('Software category', [
     #    ('Resource kind', ''),
     #    ('Resource URL', '')])
 
 def export(data, name):
     pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
-    export_srcpkgs(data, name, srcpkg_names)
+
+    for template in export_srcpkgs(data, name, srcpkg_names):
+        yield template
+
+def filename(s):
+    s_ = re.sub('[^A-Za-z0-9_+.-]', '_', s)
+    assert s_, s
+    return s_
+
+def output(path, xs):
+    with open(path, 'w') as f:
+        for x in xs:
+            f.write(str(x) + '\n')
 
 def main():
     data = PkgData()
     args = sys.argv[1:]
+    outputdir = 'output'
+
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
 
     if len(args) == 0:
         # First, find all upstream names and the source packages corresponding
@@ -252,7 +269,13 @@ def main():
         unames = set(data.cps['Upstream-Name'].dropna())
 
         for uname in unames:
-            export(data, uname)
+            if not uname:
+                continue
+
+            uname = uname.encode('utf8')
+            print uname
+            fname = os.path.join(outputdir, filename(uname))
+            output(fname, export(data, uname))
 
         # For source packages with no upstream name, use the source package
         # name as the upstream name.
@@ -261,10 +284,13 @@ def main():
             data.cps['Upstream-Name'].isnull()]['_srcpkg'])
 
         for srcpkg in no_uname:
-            export_srcpkgs(data, srcpkg, [srcpkg])
+            print srcpkg
+            fname = os.path.join(outputdir, filename(srcpkg))
+            output(fname, export_srcpkgs(data, srcpkg, [srcpkg]))
     elif len(args) == 1:
         # XXX: assumes argument is an upstream name
-        export(data, args[0])
+        for template in export(data, args[0]):
+            print template
     else:
         raise RuntimeError()
 
