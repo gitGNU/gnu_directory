@@ -60,7 +60,7 @@ def export(pkgs, cps, cpf, name):
         ('Name', name.capitalize()),
         ('Short description', ''),
         ('Full description', ''),
-        ('Homepage', homepage),
+        ('Homepage URL', homepage),
         ('User level', ''),
         # XXX get this information from apt-file
         ('Component programs', ''),
