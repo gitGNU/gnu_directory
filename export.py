@@ -1,6 +1,7 @@
 
 import re
 import sys
+import textwrap
 
 import numpy
 import pandas as pd
@@ -39,13 +40,20 @@ def extract_languages(tags):
 
     return list(set(langs))
 
-def export(pkgs, cps, cpf, name):
+def munge_description(s):
+    paras = s.split('\n .\n')
+    return '\n\n'.join(
+        textwrap.fill(para.lstrip().replace('\n', ''), 65) for para in paras)
+
+def export(pkgs, descs, cps, cpf, name):
     pkg_cps = cps[cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
     print srcpkg_names
     binpkgs = pd.concat([
         pkgs[pkgs['Source'] == srcpkg]
         for srcpkg in srcpkg_names])
+    binpkg_names = sorted(binpkgs['Package'], key=len)
+    print binpkg_names
     print list(binpkgs['Package'])
     homepages = list(binpkgs['Homepage'])
     # XXX: maybe choose the one that appears the most?
@@ -56,10 +64,22 @@ def export(pkgs, cps, cpf, name):
     langs = [s.title() for s in extract_languages(tags)]
     print langs
 
+    if name in binpkg_names:
+        descpkg = name
+    else:
+        # Heuristic: choose the package with the shortest name.
+        # We could try to do something smarter, like look for the common
+        # prefix of the descriptions of all the binary packages.
+        descpkg = binpkgs[0]
+
+    desc = list(descs[descs['Package'] == descpkg]['Description-en'])[0]
+    (short_desc, full_desc) = desc.split('\n', 1)
+    full_desc = munge_description(full_desc)
+
     print Template('Entry', [
         ('Name', name.capitalize()),
-        ('Short description', ''),
-        ('Full description', ''),
+        ('Short description', short_desc),
+        ('Full description', full_desc),
         ('Homepage URL', homepage),
         ('User level', ''),
         # XXX get this information from apt-file
@@ -90,6 +110,7 @@ def export(pkgs, cps, cpf, name):
 def main():
     pkg_store = pd.HDFStore('pkg.h5')
     pkgs = pkg_store['packages']
+    descs = pkg_store['descriptions']
     pkg_store.close()
 
     cp_store = pd.HDFStore('cp.h5')
@@ -103,9 +124,9 @@ def main():
         srcps = sorted(set(pkgs['Source']))
 
         for pkgname in srcps[:100]:
-            export(pkgs, cps, cpf, pkgname)
+            export(pkgs, descs, cps, cpf, pkgname)
     elif len(args) == 1:
-        export(pkgs, cps, cpf, args[0])
+        export(pkgs, descs, cps, cpf, args[0])
     else:
         raise RuntimeError()
 
