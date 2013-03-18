@@ -247,7 +247,7 @@ def export(data, name):
 def filename(s):
     s_ = re.sub('[^A-Za-z0-9_+.-]', '_', s)
     assert s_, s
-    return s_
+    return s_ + '.wiki'
 
 def output(path, xs):
     with open(path, 'w') as f:
