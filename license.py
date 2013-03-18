@@ -42,10 +42,10 @@ class Licenses(object):
         return '<%s %r>' % (self.__class__.__name__, self.xs)
 
 class AllLicenses(Licenses):
-    _join = '&'
+    _join = 'and'
 
 class AnyLicense(Licenses):
-    _join = '|'
+    _join = 'or'
 
 def parse_licenses(s):
     """
@@ -63,7 +63,7 @@ def parse_licenses(s):
     >>> ls
     <AnyLicense [<License X>, <License Y>, <License Z>]>
     >>> print ls
-    X | Y | Z
+    X or Y or Z
     >>> list(ls)
     [<License X>, <License Y>, <License Z>]
     >>> list(ls.flatten())
@@ -73,20 +73,20 @@ def parse_licenses(s):
     >>> ls
     <AllLicenses [<License X>, <License Y>, <License Z>]>
     >>> print ls
-    X & Y & Z
+    X and Y and Z
     >>> list(ls)
     [<License X>, <License Y>, <License Z>]
     >>> list(ls.flatten())
     ['X', 'Y', 'Z']
 
     >>> print parse_licenses("X or Y and Z")
-    X | (Y & Z)
+    X or (Y and Z)
 
     >>> print parse_licenses("X and Y or Z")
-    (X & Y) | Z
+    (X and Y) or Z
 
     >>> print parse_licenses("X, and Y or Z")
-    X & (Y | Z)
+    X and (Y or Z)
     """
 
     splits = (
