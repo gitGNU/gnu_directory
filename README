@@ -1,4 +1,15 @@
 
+## Dependencies
+
+ * pandas
+     <http://pandas.pydata.org/>
+
+ * debian
+     <https://alioth.debian.org/projects/pkg-python-debian>
+
+ * nose (to run test.py)
+     <https://nose.readthedocs.org/en/latest/>
+
 ## Importing data
 
 Loading data from package files:
