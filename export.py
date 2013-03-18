@@ -9,6 +9,16 @@ import pandas as pd
 
 import license
 
+download_keys = """
+    Origin
+    Original-Source
+    Source
+    Source-Code
+    X-Origin
+    X-Original-Package
+    X-Source
+    """
+
 def concat(xss):
     all = []
 
@@ -93,6 +103,15 @@ def srcpkg_extract_licenses(header, filess):
             ('License', canon),
             ('License note', (cp + '\n' + txt))])
 
+def extract_resources(cp_header):
+    cp_header = cp_header.dropna()
+
+    for key in re.findall('\S+', download_keys):
+        if key in cp_header:
+            yield Template('Resource', [
+                ('Resource kind', 'Download'),
+                ('Resource URL', cp_header[key])])
+
 def export(pkgs, descs, cps, cpf, name):
     pkg_cps = cps[cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
@@ -137,9 +156,12 @@ def export(pkgs, descs, cps, cpf, name):
         ('Status', ''),
         ('Is GNU', 'No')])
 
+    res = []
+
     for srcpkg in srcpkg_names:
         pkg_cps = cps[cps['_srcpkg'] == srcpkg].ix[0]
         pkg_cpf = cpf[cpf['_srcpkg'] == srcpkg]
+        res.extend(list(extract_resources(pkg_cps)))
         #licenses = license.parse_licenses(list(pkg_cpf['_license']))
         #licenses = [
         #    license.parse_licenses(row['_license'])
@@ -151,14 +173,14 @@ def export(pkgs, descs, cps, cpf, name):
             # XXX: eliminate duplicates
             print template
 
+    for template in res:
+        # XXX: eliminate duplicates
+        print template
+
     print Template('Person', [
         ('Real name', ''),
         ('Role', ''),
         ('Email', ''),
-        ('Resource URL', '')])
-
-    print Template('Resource', [
-        ('Resource kind', ''),
         ('Resource URL', '')])
 
     #print Template('Software category', [
