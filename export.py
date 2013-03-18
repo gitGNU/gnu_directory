@@ -65,6 +65,34 @@ def get_license_map():
 
     return map
 
+def srcpkg_extract_licenses(header, filess):
+    # XXX: generate template from header stanza
+    # XXX: flag CC licenses
+    # XXX: check all License stanzas were included
+    lmap = get_license_map()
+
+    for (_ix, files) in filess.iterrows():
+        lname = files['_license'].strip()
+
+        if '\n' not in lname:
+            # Looks like license text is present.
+            txt = files['License']
+        else:
+            # Licens information is a stub.
+            # XXX: look it up
+            txt = lname
+
+        canon = lmap.get(lname.lower(), 'Other')
+        cp = ''.join(
+            u'© %s\n' % line
+            for line in files['Copyright'].splitlines())
+        cp = cp.encode('utf8')
+        txt = txt.encode('utf8')
+
+        yield Template('Project license', [
+            ('License', canon),
+            ('License note', (cp + '\n' + txt))])
+
 def export(pkgs, descs, cps, cpf, name):
     pkg_cps = cps[cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
@@ -109,9 +137,8 @@ def export(pkgs, descs, cps, cpf, name):
         ('Status', ''),
         ('Is GNU', 'No')])
 
-    lmap = get_license_map()
-
     for srcpkg in srcpkg_names:
+        pkg_cps = cps[cps['_srcpkg'] == srcpkg].ix[0]
         pkg_cpf = cpf[cpf['_srcpkg'] == srcpkg]
         #licenses = license.parse_licenses(list(pkg_cpf['_license']))
         #licenses = [
@@ -120,32 +147,9 @@ def export(pkgs, descs, cps, cpf, name):
         #print licenses
         #all = set(concat(l.flatten() for l in licenses))
 
-        for (_ix, files) in pkg_cpf.iterrows():
-            lname = files['_license'].strip()
-
-            if '\n' not in lname:
-                # Looks like license text is present.
-                txt = files['License']
-            else:
-                # Licens information is a stub.
-                # XXX: look it up
-                txt = lname
-
-            canon = lmap.get(lname.lower(), 'Other')
-            cp = ''.join(
-                u'© %s\n' % line
-                for line in files['Copyright'].splitlines())
-            cp = cp.encode('utf8')
-            txt = txt.encode('utf8')
-
-            print Template('Project license', [
-                ('License', canon),
-                ('License note', (cp + '\n' + txt))])
-
-        # XXX: eliminate duplicates
-        # XXX: check all License stanzas were included
-        # XXX: generate template from header stanza
-        # XXX: flag CC licenses
+        for template in srcpkg_extract_licenses(pkg_cps, pkg_cpf):
+            # XXX: eliminate duplicates
+            print template
 
     print Template('Person', [
         ('Real name', ''),
