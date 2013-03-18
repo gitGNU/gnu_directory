@@ -103,6 +103,26 @@ def srcpkg_extract_licenses(header, filess):
             ('License', canon),
             ('License note', (cp + '\n' + txt))])
 
+def parse_person(s):
+    match = re.match('([^<]+)\s+<([^>]+)>', s)
+
+    if match:
+        return (match.group(1), match.group(2))
+    else:
+        return (s, '')
+
+def extract_people(df):
+    # XXX: extract contributors, maintainers
+    df = df.dropna()
+
+    if 'Upstream-Contact' in df:
+        (name, email) = parse_person(df['Upstream-Contact'])
+        yield Template('Person', [
+            ('Real name', name),
+            ('Role', 'contact'),
+            ('Email', email),
+            ('Resource URL', '')])
+
 def extract_resources(cp_header):
     cp_header = cp_header.dropna()
 
@@ -156,11 +176,13 @@ def export(pkgs, descs, cps, cpf, name):
         ('Status', ''),
         ('Is GNU', 'No')])
 
+    people = []
     res = []
 
     for srcpkg in srcpkg_names:
         pkg_cps = cps[cps['_srcpkg'] == srcpkg].ix[0]
         pkg_cpf = cpf[cpf['_srcpkg'] == srcpkg]
+        people.extend(list(extract_people(pkg_cps)))
         res.extend(list(extract_resources(pkg_cps)))
         #licenses = license.parse_licenses(list(pkg_cpf['_license']))
         #licenses = [
@@ -173,15 +195,13 @@ def export(pkgs, descs, cps, cpf, name):
             # XXX: eliminate duplicates
             print template
 
-    for template in res:
+    for template in people:
         # XXX: eliminate duplicates
         print template
 
-    print Template('Person', [
-        ('Real name', ''),
-        ('Role', ''),
-        ('Email', ''),
-        ('Resource URL', '')])
+    for template in res:
+        # XXX: eliminate duplicates
+        print template
 
     #print Template('Software category', [
     #    ('Resource kind', ''),
