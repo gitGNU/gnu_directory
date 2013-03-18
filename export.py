@@ -51,7 +51,9 @@ class Template(object):
     def __str__(self):
         return '{{%s\n%s\n}}' % (
             self.name,
-            '\n'.join(['|' + '%s=%s' % (n, v) for (n, v) in self.values]))
+            '\n'.join(['|' + '%s=%s' %
+                (n, v.encode('utf8') if isinstance(v, unicode) else v)
+                for (n, v) in self.values]))
 
 def parse_tags(s):
     return s.replace('\n', '').split(', ')
