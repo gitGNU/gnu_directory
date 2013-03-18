@@ -110,6 +110,8 @@ def main(paths):
             files.append(file_)
             licenses.append(license)
 
+        print
+
     summaries = pd.concat(summaries)
     files = pd.concat(files)
     licenses = pd.concat(licenses)
