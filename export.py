@@ -156,7 +156,7 @@ def export(data, name):
     srcpkg_names = list(pkg_cps['_srcpkg'])
     print srcpkg_names
     binpkgs = pd.concat([
-        data.pkgs[data.pkgs['Source'] == srcpkg]
+        data.pkgs[data.pkgs['_srcpkg'] == srcpkg]
         for srcpkg in srcpkg_names])
     binpkg_names = sorted(binpkgs['Package'], key=len)
     print binpkg_names
@@ -241,7 +241,7 @@ def main():
 
     if len(args) == 0:
         # XXX use upstream names
-        srcps = sorted(set(data.pkgs['Source']))
+        srcps = sorted(set(data.pkgs['_srcpkg']))
 
         for pkgname in srcps[:100]:
             export(data, pkgname)
