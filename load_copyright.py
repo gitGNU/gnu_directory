@@ -70,6 +70,7 @@ def import_one(pkgname, fh):
         return None
 
     header['_srcpkg'] = pkgname
+    header['_license'] = header.get('License', '').split('\n')[0]
     copy_summary = pd.DataFrame([header])
     #print copy_summary.T.to_string()
     #print
