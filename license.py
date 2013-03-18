@@ -4,6 +4,9 @@ class License(object):
         self.name = name
 
     def __iter__(self):
+        yield self
+
+    def flatten(self):
         yield self.name
 
     def __str__(self, depth=0):
@@ -18,7 +21,11 @@ class Licenses(object):
 
     def __iter__(self):
         for x in self.xs:
-            for y in iter(x):
+            yield x
+
+    def flatten(self):
+        for x in self.xs:
+            for y in x.flatten():
                 yield y
 
     def __str__(self, depth=0):
@@ -42,18 +49,42 @@ class AnyLicense(Licenses):
 
 def parse_licenses(s):
     """
-    >>> print parse_licenses("X")
+    >>> ls = parse_licenses("X")
+    >>> ls
+    <License X>
+    >>> print ls
     X
-    >>> print parse_licenses("X or Y or Z")
+    >>> list(ls)
+    [<License X>]
+    >>> list(ls.flatten())
+    ['X']
+
+    >>> ls = parse_licenses("X or Y or Z")
+    >>> ls
+    <AnyLicense [<License X>, <License Y>, <License Z>]>
+    >>> print ls
     X | Y | Z
-    >>> print parse_licenses("X and Y and Z")
+    >>> list(ls)
+    [<License X>, <License Y>, <License Z>]
+    >>> list(ls.flatten())
+    ['X', 'Y', 'Z']
+
+    >>> ls = parse_licenses("X and Y and Z")
+    >>> ls
+    <AllLicenses [<License X>, <License Y>, <License Z>]>
+    >>> print ls
     X & Y & Z
-    >>> parse_licenses("X or Y and Z")
-    <AnyLicense [<License X>, <AllLicenses [<License Y>, <License Z>]>]>
+    >>> list(ls)
+    [<License X>, <License Y>, <License Z>]
+    >>> list(ls.flatten())
+    ['X', 'Y', 'Z']
+
     >>> print parse_licenses("X or Y and Z")
     X | (Y & Z)
+
     >>> print parse_licenses("X and Y or Z")
     (X & Y) | Z
+
     >>> print parse_licenses("X, and Y or Z")
     X & (Y | Z)
     """
