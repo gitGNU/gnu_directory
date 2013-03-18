@@ -31,6 +31,9 @@ def concat(xss):
 def today():
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
+def warn(*x):
+    print >>sys.stderr, ('warning:',) + x
+
 class PkgData(object):
     def __init__(self):
         pkg_store = pd.HDFStore('pkg.h5')
@@ -151,13 +154,15 @@ def extract_resources(cp_header):
                 ('Resource kind', 'Download'),
                 ('Resource URL', cp_header[key])])
 
-def export(data, name):
-    pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
-    srcpkg_names = list(pkg_cps['_srcpkg'])
-    print srcpkg_names
+def export_srcpkgs(data, name, srcpkg_names):
     binpkgs = pd.concat([
         data.pkgs[data.pkgs['_srcpkg'] == srcpkg]
         for srcpkg in srcpkg_names])
+
+    if len(binpkgs) == 0:
+        warn('no binary packages found for', srcpkg_names)
+        return
+
     binpkg_names = sorted(binpkgs['Package'], key=len)
     print binpkg_names
     print list(binpkgs['Package'])
@@ -176,7 +181,7 @@ def export(data, name):
         # Heuristic: choose the package with the shortest name.
         # We could try to do something smarter, like look for the common
         # prefix of the descriptions of all the binary packages.
-        descpkg = binpkgs[0]
+        descpkg = binpkg_names[0]
 
     desc = list(data.descs[
         data.descs['Package'] == descpkg]['Description-en'])[0]
@@ -235,16 +240,28 @@ def export(data, name):
     #    ('Resource kind', ''),
     #    ('Resource URL', '')])
 
+def export(data, name):
+    pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
+    srcpkg_names = list(pkg_cps['_srcpkg'])
+    print name
+    print 'source packages:', srcpkg_names
+    export_srcpkgs(data, name, srcpkg_names)
+
 def main():
     data = PkgData()
     args = sys.argv[1:]
 
     if len(args) == 0:
-        # XXX use upstream names
-        srcps = sorted(set(data.pkgs['_srcpkg']))
+        unames = set(data.cps['Upstream-Name'].dropna())
 
-        for pkgname in srcps[:100]:
-            export(data, pkgname)
+        for uname in unames:
+            export(data, uname)
+
+        no_uname = set(data.cps[
+            data.cps['Upstream-Name'].isnull()]['_srcpkg'])
+
+        for srcpkg in no_uname:
+            export_srcpkgs(data, srcpkg, [srcpkg])
     elif len(args) == 1:
         export(data, args[0])
     else:
