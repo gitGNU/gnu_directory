@@ -1,0 +1,4 @@
+.*.sw[nop]
+*.pyc
+cp.h5
+pkg.h5
