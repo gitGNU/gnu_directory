@@ -182,6 +182,12 @@ def export(pkgs, descs, cps, cpf, name):
         ('Submitted by', 'Debian import'),
         ('Submitted date', today())])
 
+    print Template('Import', [
+        ('Source', 'Debian'),
+        ('Source link',
+            'http://packages.debian.org/sid/' + srcpkg_names[0]),
+        ('Date', today())])
+
     people = []
     res = []
 
