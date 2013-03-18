@@ -1,3 +1,4 @@
+# encoding: utf8
 
 import re
 import sys
@@ -5,6 +6,8 @@ import textwrap
 
 import numpy
 import pandas as pd
+
+import license
 
 def concat(xss):
     all = []
@@ -44,6 +47,23 @@ def munge_description(s):
     paras = s.split('\n .\n')
     return '\n\n'.join(
         textwrap.fill(para.lstrip().replace('\n', ''), 65) for para in paras)
+
+def get_license_map():
+    map = {}
+
+    for para in file('license_map').read().split('\n\n'):
+        if not para:
+            continue
+
+        match = re.match('\[([^\]]+)\]', para)
+        assert match, para
+        canonical = match.group(1)
+        aliases = para[match.end():].lstrip().splitlines()
+
+        for alias in aliases:
+            map[alias] = canonical
+
+    return map
 
 def export(pkgs, descs, cps, cpf, name):
     pkg_cps = cps[cps['Upstream-Name'] == name]
@@ -89,9 +109,43 @@ def export(pkgs, descs, cps, cpf, name):
         ('Status', ''),
         ('Is GNU', 'No')])
 
-    print Template('Project license', [
-        ('License', ''),
-        ('License note', '')])
+    lmap = get_license_map()
+
+    for srcpkg in srcpkg_names:
+        pkg_cpf = cpf[cpf['_srcpkg'] == srcpkg]
+        #licenses = license.parse_licenses(list(pkg_cpf['_license']))
+        #licenses = [
+        #    license.parse_licenses(row['_license'])
+        #    for (_ix, row) in pkg_cpf.iterrows()]
+        #print licenses
+        #all = set(concat(l.flatten() for l in licenses))
+
+        for (_ix, files) in pkg_cpf.iterrows():
+            lname = files['_license'].strip()
+
+            if '\n' not in lname:
+                # Looks like license text is present.
+                txt = files['License']
+            else:
+                # Licens information is a stub.
+                # XXX: look it up
+                txt = lname
+
+            canon = lmap.get(lname.lower(), 'Other')
+            cp = ''.join(
+                u'© %s\n' % line
+                for line in files['Copyright'].splitlines())
+            cp = cp.encode('utf8')
+            txt = txt.encode('utf8')
+
+            print Template('Project license', [
+                ('License', canon),
+                ('License note', (cp + '\n' + txt))])
+
+        # XXX: eliminate duplicates
+        # XXX: check all License stanzas were included
+        # XXX: generate template from header stanza
+        # XXX: flag CC licenses
 
     print Template('Person', [
         ('Real name', ''),
