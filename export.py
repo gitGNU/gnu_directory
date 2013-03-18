@@ -31,6 +31,18 @@ def concat(xss):
 def today():
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
+class PkgData(object):
+    def __init__(self):
+        pkg_store = pd.HDFStore('pkg.h5')
+        self.pkgs = pkg_store['packages']
+        self.descs = pkg_store['descriptions']
+        pkg_store.close()
+
+        cp_store = pd.HDFStore('cp.h5')
+        self.cpf = cp_store['cp_files']
+        self.cps = cp_store['cp_summary']
+        cp_store.close()
+
 class Template(object):
     def __init__(self, name, values):
         self.name = name
@@ -136,12 +148,12 @@ def extract_resources(cp_header):
                 ('Resource kind', 'Download'),
                 ('Resource URL', cp_header[key])])
 
-def export(pkgs, descs, cps, cpf, name):
-    pkg_cps = cps[cps['Upstream-Name'] == name]
+def export(data, name):
+    pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
     print srcpkg_names
     binpkgs = pd.concat([
-        pkgs[pkgs['Source'] == srcpkg]
+        data.pkgs[data.pkgs['Source'] == srcpkg]
         for srcpkg in srcpkg_names])
     binpkg_names = sorted(binpkgs['Package'], key=len)
     print binpkg_names
@@ -163,7 +175,8 @@ def export(pkgs, descs, cps, cpf, name):
         # prefix of the descriptions of all the binary packages.
         descpkg = binpkgs[0]
 
-    desc = list(descs[descs['Package'] == descpkg]['Description-en'])[0]
+    desc = list(data.descs[
+        data.descs['Package'] == descpkg]['Description-en'])[0]
     (short_desc, full_desc) = desc.split('\n', 1)
     full_desc = munge_description(full_desc)
 
@@ -192,8 +205,8 @@ def export(pkgs, descs, cps, cpf, name):
     res = []
 
     for srcpkg in srcpkg_names:
-        pkg_cps = cps[cps['_srcpkg'] == srcpkg].ix[0]
-        pkg_cpf = cpf[cpf['_srcpkg'] == srcpkg]
+        pkg_cps = data.cps[data.cps['_srcpkg'] == srcpkg].ix[0]
+        pkg_cpf = data.cpf[data.cpf['_srcpkg'] == srcpkg]
         people.extend(list(extract_people(pkg_cps)))
         res.extend(list(extract_resources(pkg_cps)))
         #licenses = license.parse_licenses(list(pkg_cpf['_license']))
@@ -220,25 +233,17 @@ def export(pkgs, descs, cps, cpf, name):
     #    ('Resource URL', '')])
 
 def main():
-    pkg_store = pd.HDFStore('pkg.h5')
-    pkgs = pkg_store['packages']
-    descs = pkg_store['descriptions']
-    pkg_store.close()
-
-    cp_store = pd.HDFStore('cp.h5')
-    cpf = cp_store['cp_files']
-    cps = cp_store['cp_summary']
-    cp_store.close()
-
+    data = PkgData()
     args = sys.argv[1:]
 
     if len(args) == 0:
-        srcps = sorted(set(pkgs['Source']))
+        # XXX use upstream names
+        srcps = sorted(set(data.pkgs['Source']))
 
         for pkgname in srcps[:100]:
-            export(pkgs, descs, cps, cpf, pkgname)
+            export(data, pkgname)
     elif len(args) == 1:
-        export(pkgs, descs, cps, cpf, args[0])
+        export(data, args[0])
     else:
         raise RuntimeError()
 
