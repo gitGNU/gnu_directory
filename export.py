@@ -252,10 +252,16 @@ def main():
     args = sys.argv[1:]
 
     if len(args) == 0:
+        # First, find all upstream names and the source packages corresponding
+        # to them.
+
         unames = set(data.cps['Upstream-Name'].dropna())
 
         for uname in unames:
             export(data, uname)
+
+        # For source packages with no upstream name, use the source package
+        # name as the upstream name.
 
         no_uname = set(data.cps[
             data.cps['Upstream-Name'].isnull()]['_srcpkg'])
@@ -263,6 +269,7 @@ def main():
         for srcpkg in no_uname:
             export_srcpkgs(data, srcpkg, [srcpkg])
     elif len(args) == 1:
+        # XXX: assumes argument is an upstream name
         export(data, args[0])
     else:
         raise RuntimeError()
