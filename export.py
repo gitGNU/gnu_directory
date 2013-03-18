@@ -57,7 +57,7 @@ def export(pkgs, cps, cpf, name):
     print langs
 
     print Template('Entry', [
-        ('Name', srcpkg),
+        ('Name', name.capitalize()),
         ('Short description', ''),
         ('Full description', ''),
         ('Homepage', homepage),
