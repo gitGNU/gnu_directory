@@ -87,11 +87,15 @@ def parse_licenses(s):
 
     >>> print parse_licenses("X, and Y or Z")
     X and (Y or Z)
+
+    >>> print parse_licenses("X | Y")
+    X or Y
     """
 
     splits = (
         (', and ', AllLicenses),
         (' or ', AnyLicense),
+        (' | ', AnyLicense),
         (' and ', AllLicenses))
 
     for (split_str, cls) in splits:
