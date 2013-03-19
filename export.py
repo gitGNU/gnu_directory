@@ -33,7 +33,8 @@ def today():
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
 def warn(*x):
-    print >>sys.stderr, ('warning:',) + x
+    for s in ('warning:',) + x + ('\n',):
+        print >>sys.stderr, s,
 
 class PkgData(object):
     def __init__(self):
