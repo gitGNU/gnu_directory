@@ -34,3 +34,13 @@ logging into powell.debian.org (which hosts.packages.debian.org) and running:
     $ cd /srv/packages.debian.org/www/changelogs/pool
     $ tar -zchf ~/copyright.tar.gz main/*/*/current/copyright
 
+## Exporting data
+
+One package:
+
+    $ python export.py Pandoc
+
+All packages:
+
+    $ python export.py
+
