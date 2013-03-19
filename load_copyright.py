@@ -71,6 +71,14 @@ def import_one(pkgname, fh):
 
     header['_srcpkg'] = pkgname
     header['_license'] = header.get('License', '').split('\n')[0]
+
+    if 'Upstream-Name' in header:
+        # Make spaces breakable (!).
+        # Conceivably other characters need replacing.
+        header['Upstream-Name'] = \
+            header['Upstream-Name'].replace(u'\xa0', ' ')
+            #copy_summary['Upstream-Name'].replace('\xc2\xa0', ' ')
+
     copy_summary = pd.DataFrame([header])
     #print copy_summary.T.to_string()
     #print
