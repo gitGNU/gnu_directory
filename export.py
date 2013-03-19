@@ -279,8 +279,7 @@ def export_all(data):
         if not uname:
             continue
 
-        uname = uname.encode('utf8')
-        print uname
+        print uname.encode('utf8')
         fname = os.path.join(outputdir, filename(uname))
         output(fname, export(data, uname))
 
