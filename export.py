@@ -28,12 +28,20 @@ def concat(xss):
 
     return all
 
+def indent(s):
+    return ''.join(
+            '  %s\n' % line if line else '\n'
+            for line in s.splitlines())
+
 def today():
     return datetime.datetime.now().strftime('%Y-%m-%d')
 
 def warn(*x):
     for s in ('warning:',) + x + ('\n',):
         print >>sys.stderr, s,
+
+class ExportFailure(Exception):
+    pass
 
 class PkgData(object):
     def __init__(self):
@@ -45,6 +53,7 @@ class PkgData(object):
         cp_store = pd.HDFStore('cp.h5')
         self.cpf = cp_store['cp_files']
         self.cps = cp_store['cp_summary']
+        self.licenses = cp_store['licenses']
         cp_store.close()
 
 class Template(object):
@@ -86,7 +95,7 @@ def catechise(s):
 def munge_description(s):
     paras = s.split('\n .\n')
     return '\n\n'.join(
-        catechise(textwrap.fill(para.lstrip().replace('\n', ''), 65))
+        textwrap.fill(para.lstrip().replace('\n', ''), 65)
         for para in paras)
 
 def get_license_map():
@@ -106,27 +115,50 @@ def get_license_map():
 
     return map
 
-def srcpkg_extract_licenses(header, filess):
+def srcpkg_extract_licenses(header, filess, licenses):
     # XXX: generate template from header stanza
     # XXX: flag CC licenses
     # XXX: check all License stanzas were included
     lmap = get_license_map()
+    by_name = dict([
+        (s['_license'],
+            s['License'].split('\n', 1)[1]
+            if '\n' in s['License']
+            else s['License'])
+        for (_idx, s) in licenses.iterrows()])
 
     for (_ix, files) in filess.iterrows():
-        lname = files['_license'].strip()
+        ldesc = files['_license'].strip()
+        ltext = files['License']
 
-        if '\n' not in lname:
-            # Looks like license text is present.
-            txt = files['License']
+        if '\n' in ltext:
+            # Looks like license text is included directly.
+            ltext = munge_description(ltext)
+            txt = 'License: %s\n\n%s' % (ldesc, ltext)
+        elif ldesc in by_name:
+            # License information is a stub. Try to find the corresponding
+            # text(s).
+
+            ltext = munge_description(by_name[ldesc])
+            txt = 'License: %s\n\n%s' % (ldesc, ltext)
         else:
-            # Licens information is a stub.
-            # XXX: look it up
-            txt = lname
+            parsed = license.parse_licenses(ldesc)
+            lnames = list(parsed.flatten())
+            missing = set(lnames) - set(by_name.keys())
 
-        canon = lmap.get(lname.lower(), 'Other')
+            if missing:
+                raise ExportFailure(
+                    'missing license text: ' + ', '.join(missing))
+
+            ltext = '\n'.join('%s:\n\n%s' %
+                    (lname, indent(munge_description(by_name[lname])))
+                for lname in lnames)
+            txt = 'License: %s\n\n%s' % (parsed, ltext)
+
+        canon = lmap.get(ldesc.lower(), 'Other')
         # XXX: Should maybe bail if there's no copyright field.
         cp = ''.join(
-            u'© %s\n' % line
+            u'© %s\n' % line.lstrip()
             for line in files.dropna().get('Copyright', '').splitlines())
         cp = cp.encode('utf8')
         txt = txt.encode('utf8')
@@ -192,7 +224,7 @@ def export_srcpkgs(data, name, srcpkg_names):
     desc = list(data.descs[
         data.descs['Package'] == descpkg]['Description-en'])[0]
     (short_desc, full_desc) = desc.split('\n', 1)
-    full_desc = munge_description(full_desc)
+    full_desc = catechise(munge_description(full_desc))
 
     yield Template('Entry', [
         ('Name', name.capitalize()),
@@ -221,16 +253,12 @@ def export_srcpkgs(data, name, srcpkg_names):
     for srcpkg in srcpkg_names:
         pkg_cps = data.cps[data.cps['_srcpkg'] == srcpkg].ix[0]
         pkg_cpf = data.cpf[data.cpf['_srcpkg'] == srcpkg]
+        pkg_licenses = data.licenses[data.licenses['_srcpkg'] == srcpkg]
         people.extend(list(extract_people(pkg_cps)))
         res.extend(list(extract_resources(pkg_cps)))
-        #licenses = license.parse_licenses(list(pkg_cpf['_license']))
-        #licenses = [
-        #    license.parse_licenses(row['_license'])
-        #    for (_ix, row) in pkg_cpf.iterrows()]
-        #print licenses
-        #all = set(concat(l.flatten() for l in licenses))
 
-        for template in srcpkg_extract_licenses(pkg_cps, pkg_cpf):
+        for template in srcpkg_extract_licenses(
+                pkg_cps, pkg_cpf, pkg_licenses):
             # XXX: eliminate duplicates
             yield template
 
@@ -263,6 +291,12 @@ def output(path, xs):
         for x in xs:
             f.write(str(x) + '\n')
 
+def try_export(path, name, xs):
+    try:
+        output(path, xs)
+    except ExportFailure, e:
+        warn('export failed: %s: %s' % (name, e.message))
+
 def export_all(data):
     outputdir = 'output'
 
@@ -280,7 +314,7 @@ def export_all(data):
 
         print uname.encode('utf8')
         fname = os.path.join(outputdir, filename(uname))
-        output(fname, export(data, uname))
+        try_export(fname, uname, export(data, uname))
 
     # For source packages with no upstream name, use the source package
     # name as the upstream name.
@@ -291,7 +325,7 @@ def export_all(data):
     for srcpkg in no_uname:
         print srcpkg
         fname = os.path.join(outputdir, filename(srcpkg))
-        output(fname, export_srcpkgs(data, srcpkg, [srcpkg]))
+        try_export(fname, srcpkg, export_srcpkgs(data, srcpkg, [srcpkg]))
 
 def main():
     data = PkgData()
