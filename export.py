@@ -76,10 +76,19 @@ def extract_languages(tags):
 
     return list(set(langs))
 
+def catechise(s):
+    heresies = ["open source", "debian", "(?<!gnu/)linux", "creative commons"]
+    pattern = '\\b(%s)\\b' % '|'.join([h.replace(' ', '.') for h in heresies])
+    return re.sub(pattern,
+        lambda m: '??%s??' % m.group(1).replace('\n', ' '),
+        s,
+        re.DOTALL | re.IGNORECASE)
+
 def munge_description(s):
     paras = s.split('\n .\n')
     return '\n\n'.join(
-        textwrap.fill(para.lstrip().replace('\n', ''), 65) for para in paras)
+        catechise(textwrap.fill(para.lstrip().replace('\n', ''), 65))
+        for para in paras)
 
 def get_license_map():
     map = {}
