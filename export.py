@@ -6,7 +6,6 @@ import re
 import sys
 import textwrap
 
-import numpy
 import pandas as pd
 
 import license
