@@ -1,6 +1,7 @@
 # encoding: utf8
 
 import datetime
+import itertools
 import os
 import re
 import sys
@@ -119,6 +120,7 @@ def srcpkg_extract_licenses(header, filess, licenses):
     # XXX: generate template from header stanza
     # XXX: flag CC licenses
     # XXX: check all License stanzas were included
+    # XXX: exclude licenses for Files: debian/*
     lmap = get_license_map()
     by_name = dict([
         (s['_license'],
@@ -274,13 +276,6 @@ def export_srcpkgs(data, name, srcpkg_names):
     #    ('Resource kind', ''),
     #    ('Resource URL', '')])
 
-def export(data, name):
-    pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
-    srcpkg_names = list(pkg_cps['_srcpkg'])
-
-    for template in export_srcpkgs(data, name, srcpkg_names):
-        yield template
-
 def filename(s):
     s_ = re.sub('[^A-Za-z0-9_+.-]', '_', s)
     assert s_, s
@@ -291,11 +286,10 @@ def output(path, xs):
         for x in xs:
             f.write(str(x) + '\n')
 
-def try_export(path, name, xs):
-    try:
-        output(path, xs)
-    except ExportFailure, e:
-        warn('export failed: %s: %s' % (name, e.message))
+def uname_srcpkgs(data, name):
+    pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
+    srcpkg_names = list(pkg_cps['_srcpkg'])
+    return srcpkg_names
 
 def export_all(data):
     outputdir = 'output'
@@ -306,26 +300,37 @@ def export_all(data):
     # First, find all upstream names and the source packages corresponding
     # to them.
 
-    unames = set(data.cps['Upstream-Name'].dropna())
-
-    for uname in unames:
-        if not uname:
-            continue
-
-        print uname.encode('utf8')
-        fname = os.path.join(outputdir, filename(uname))
-        try_export(fname, uname, export(data, uname))
+    unames = sorted(set(data.cps['Upstream-Name'].dropna()))
 
     # For source packages with no upstream name, use the source package
     # name as the upstream name.
 
-    no_uname = set(data.cps[
-        data.cps['Upstream-Name'].isnull()]['_srcpkg'])
+    no_uname = sorted(set(data.cps[
+        data.cps['Upstream-Name'].isnull()]['_srcpkg']))
 
-    for srcpkg in no_uname:
-        print srcpkg
-        fname = os.path.join(outputdir, filename(srcpkg))
-        try_export(fname, srcpkg, export_srcpkgs(data, srcpkg, [srcpkg]))
+    packages = itertools.chain(
+        ((uname, uname_srcpkgs(data, uname)) for uname in unames),
+        ((srcpkg, [srcpkg]) for srcpkg in no_uname))
+
+    for (name, srcpkgs) in packages:
+        if not name:
+            continue
+
+        if '\n' in name:
+            # Seriously?
+            warn('bad name: %r' % name)
+            continue
+
+        print (name.encode('utf8') if isinstance(name, unicode) else name)
+        fname = filename(name)
+        path = os.path.join(outputdir, fname)
+        # Generator; exceptions are delayed.
+        templates = export_srcpkgs(data, name, srcpkgs)
+
+        try:
+            output(path, templates)
+        except ExportFailure, e:
+            warn('export failed: %s: %s' % (name, e.message))
 
 def main():
     data = PkgData()
@@ -335,7 +340,11 @@ def main():
         export_all(data)
     elif len(args) == 1:
         # XXX: assumes argument is an upstream name
-        for template in export(data, args[0]):
+        uname = args[0]
+        srcpkgs = uname_srcpkgs(data, uname)
+        templates = export_srcpkgs(data, uname, srcpkgs)
+
+        for template in templates:
             print template
     else:
         raise RuntimeError()
