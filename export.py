@@ -2,6 +2,7 @@
 
 import datetime
 import itertools
+import json
 import os
 import re
 import sys
@@ -293,6 +294,7 @@ def uname_srcpkgs(data, name):
 
 def export_all(data):
     outputdir = 'output'
+    index = {}
 
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
@@ -324,6 +326,7 @@ def export_all(data):
         print (name.encode('utf8') if isinstance(name, unicode) else name)
         fname = filename(name)
         path = os.path.join(outputdir, fname)
+        index[fname] = {'page': name, 'file': fname}
         # Generator; exceptions are delayed.
         templates = export_srcpkgs(data, name, srcpkgs)
 
@@ -331,6 +334,9 @@ def export_all(data):
             output(path, templates)
         except ExportFailure, e:
             warn('export failed: %s: %s' % (name, e.message))
+
+    path = os.path.join(outputdir, 'index.json')
+    json.dump(index, file(path, 'w'))
 
 def main():
     data = PkgData()
