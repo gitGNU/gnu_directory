@@ -168,7 +168,10 @@ def srcpkg_extract_licenses(header, filess, licenses):
 
         yield Template('Project license', [
             ('License', canon),
-            ('License note', (cp + '\n' + txt))])
+            ('License copyright', cp),
+            ('License verified by', 'Debian'),
+            ('License verified date', today()),
+            ('License note', txt)])
 
 def parse_person(s):
     match = re.match('([^<]+)\s+<([^>]+)>', s)
