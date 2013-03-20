@@ -296,12 +296,6 @@ def uname_srcpkgs(data, name):
     return srcpkg_names
 
 def export_all(data):
-    outputdir = 'output'
-    index = {}
-
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
-
     # First, find all upstream names and the source packages corresponding
     # to them.
 
@@ -326,12 +320,21 @@ def export_all(data):
             warn('bad name: %r' % name)
             continue
 
+        # Generator; exceptions are delayed.
+        templates = export_srcpkgs(data, name, srcpkgs)
+        yield (name, templates)
+
+def export_all_to_directory(data, outputdir):
+    index = {}
+
+    if not os.path.exists(outputdir):
+        os.makedirs(outputdir)
+
+    for (name, templates) in export_all(data):
         print (name.encode('utf8') if isinstance(name, unicode) else name)
         fname = filename(name)
         path = os.path.join(outputdir, fname)
         index[fname] = {'page': name, 'file': fname}
-        # Generator; exceptions are delayed.
-        templates = export_srcpkgs(data, name, srcpkgs)
 
         try:
             output(path, templates)
@@ -346,7 +349,7 @@ def main():
     args = sys.argv[1:]
 
     if len(args) == 0:
-        export_all(data)
+        export_all_to_directory(data, 'output')
     elif len(args) == 1:
         # XXX: assumes argument is an upstream name
         uname = args[0]
