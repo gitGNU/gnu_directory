@@ -40,7 +40,19 @@ One package:
 
     $ python export.py Pandoc
 
-All packages:
+All packages, as wiki pages:
 
     $ python export.py
+
+(Output is in "output" directory.)
+
+All packages, as JSON:
+
+    $ python export_json.py
+
+JSON output can be converted to wiki pages:
+
+    $ python json_to_wiki.py < packages.json
+
+(Output is in "converted" directory.)
 
