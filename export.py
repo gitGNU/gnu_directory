@@ -290,6 +290,21 @@ def output(path, xs):
         for x in xs:
             f.write(str(x) + '\n')
 
+def output_multi(path, xs):
+    index = {}
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    for (name, templates) in xs:
+        fname = filename(name)
+        fpath = os.path.join(path, fname)
+        index[fname] = {'page': name, 'file': fname}
+        output(fpath, templates)
+
+    fpath = os.path.join(path, 'index.json')
+    json.dump(index, file(fpath, 'w'))
+
 def uname_srcpkgs(data, name):
     pkg_cps = data.cps[data.cps['Upstream-Name'] == name]
     srcpkg_names = list(pkg_cps['_srcpkg'])
@@ -325,24 +340,19 @@ def export_all(data):
         yield (name, templates)
 
 def export_all_to_directory(data, outputdir):
-    index = {}
+    def _export():
+        for (name, templates) in export_all(data):
+            print (name.encode('utf8') if isinstance(name, unicode) else name)
 
-    if not os.path.exists(outputdir):
-        os.makedirs(outputdir)
+            try:
+                # Force errors.
+                templates = list(templates)
+            except ExportFailure, e:
+                warn('export failed: %s: %s' % (name, e.message))
 
-    for (name, templates) in export_all(data):
-        print (name.encode('utf8') if isinstance(name, unicode) else name)
-        fname = filename(name)
-        path = os.path.join(outputdir, fname)
-        index[fname] = {'page': name, 'file': fname}
+            yield(name, templates)
 
-        try:
-            output(path, templates)
-        except ExportFailure, e:
-            warn('export failed: %s: %s' % (name, e.message))
-
-    path = os.path.join(outputdir, 'index.json')
-    json.dump(index, file(path, 'w'))
+    output_multi(outputdir, _export())
 
 def main():
     data = PkgData()
