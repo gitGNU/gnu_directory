@@ -58,6 +58,9 @@ class PkgData(object):
         self.licenses = cp_store['licenses']
         cp_store.close()
 
+def nouni(s):
+    return s.encode('utf8') if isinstance(s, unicode) else s
+
 class Template(object):
     def __init__(self, name, values):
         self.name = name
@@ -65,9 +68,9 @@ class Template(object):
 
     def __str__(self):
         return '{{%s\n%s\n}}' % (
-            self.name,
+            nouni(self.name),
             '\n'.join(['|' + '%s=%s' %
-                (n, v.encode('utf8') if isinstance(v, unicode) else v)
+                (nouni(n), nouni(v))
                 for (n, v) in self.values]))
 
 def parse_tags(s):
