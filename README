@@ -10,6 +10,25 @@
  * nose (to run test.py)
      <https://nose.readthedocs.org/en/latest/>
 
+## Overview
+
+Data is collected from various sources by the "load" scripts and converted to
+the Pandas library's "data frame" structure, which is somewhat similar to a
+SQL database except that there is no schema. Or to put it another way, it's
+like a sparse grid that has named fields along one axis and numbered rows on
+the other. This approach means that we can import data fairly direcetly from
+fairly messy sources and work out the details at export time.
+
+These data frames are saved into a pair of HDF (hierarchical data format)
+files, `pkg.h5` and `cp.h5`, which contain general package information and
+copyright/licensing information respectively.
+
+We generate Semantic MediaWiki pages from this data using one of a pair of
+export scripts. `export.py` exports the pages as a directory containing one
+file per page. `export_json.py` exports the pages as a single JSON file. This
+JSON file can be converted to a directory of wiki pages using the
+`json_to_wiki.py` script.
+
 ## Importing data
 
 Loading data from package files:
@@ -55,4 +74,8 @@ JSON output can be converted to wiki pages:
     $ python json_to_wiki.py < packages.json
 
 (Output is in "converted" directory.)
+
+## Running the test suite
+
+    $ python test.py
 
