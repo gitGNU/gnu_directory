@@ -206,9 +206,15 @@ def extract_resources(cp_header):
                 ('Resource URL', cp_header[key])])
 
 def export_srcpkgs(data, name, srcpkg_names):
+    # Map source package names to binary packages, and also make note
+    # of which versions of those source packages we're looking at.
     binpkgs = pd.concat([
         data.pkgs[data.pkgs['_srcpkg'] == srcpkg]
         for srcpkg in srcpkg_names])
+    versions = {}
+
+    for (_i, pkg) in binpkgs.iterrows():
+        versions[pkg['_srcpkg']] = pkg['Version']
 
     if len(binpkgs) == 0:
         warn('no binary packages found for', srcpkg_names)
@@ -254,6 +260,8 @@ def export_srcpkgs(data, name, srcpkg_names):
         ('Source', 'Debian'),
         ('Source link',
             'http://packages.debian.org/sid/' + srcpkg_names[0]),
+        ('Source packages',
+             ', '.join('%s %s' % (k, v) for (k, v) in versions.iteritems())),
         ('Date', today())])
 
     people = []
