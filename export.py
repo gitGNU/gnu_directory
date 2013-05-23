@@ -12,6 +12,7 @@ import pandas as pd
 
 import license
 
+# Package fields which refer to download locations.
 download_keys = """
     Origin
     Original-Source
@@ -206,6 +207,11 @@ def extract_resources(cp_header):
                 ('Resource URL', cp_header[key])])
 
 def export_srcpkgs(data, name, srcpkg_names):
+    """Export a package by reference to its constituent source packages.
+
+    This coordinates all the information that goes into a particular page.
+    """
+
     # Map source package names to binary packages, and also make note
     # of which versions of those source packages we're looking at.
     binpkgs = pd.concat([
@@ -302,6 +308,8 @@ def output(path, xs):
             f.write(str(x) + '\n')
 
 def output_multi(path, xs):
+    "Output a bunch of pages to a directory with an index."
+
     index = {}
 
     if not os.path.exists(path):
@@ -322,6 +330,11 @@ def uname_srcpkgs(data, name):
     return srcpkg_names
 
 def export_all(data):
+    """Export all packages.
+
+    Returns a generator of (name, templates) tuples.
+    """
+
     # First, find all upstream names and the source packages corresponding
     # to them.
 
