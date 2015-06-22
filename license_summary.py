@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # summary of the License: fields found in Files: clauses
 
 import pandas as pd
