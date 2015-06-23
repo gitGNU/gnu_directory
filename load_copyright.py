@@ -24,9 +24,11 @@ def read_copyright(fh):
         paras = [(p.keys()[0], dict(p)) for p in paras]
     except (KeyError, TypeError, StopIteration):
         raise BadFormat('not in DEP-5 format?')
+        return
 
-    if 'Format' not in header and 'Format-Specification' not in header:
+    if 'Format' not in header:
         raise ValueError('no Format field')
+        return
 
     files = []
     licences = []
@@ -46,6 +48,7 @@ def read_copyright(fh):
         if type == 'Files':
             if 'License' not in d:
                 raise ValueError('no license: ' + repr(d))
+                return
 
             #keys = set(d.keys())
             #assert keys <= file_fields, keys
