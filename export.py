@@ -242,10 +242,13 @@ def export_srcpkgs(data, name, srcpkg_names):
         # We could try to do something smarter, like look for the common
         # prefix of the descriptions of all the binary packages.
         descpkg = binpkg_names[0]
-
-    desc = list(data.descs[
-        data.descs['Package'] == descpkg]['Description-en'])[0]
-    (short_desc, full_desc) = desc.split('\n', 1)
+    try:
+        desc = list(data.descs[
+            data.descs['Package'] == descpkg]['Description-en'])[0]
+        (short_desc, full_desc) = desc.split('\n', 1)
+    except:
+        full_desc = ''
+        short_desc = ''
     full_desc = catechise(munge_description(full_desc))
 
     yield Template('Entry', [
