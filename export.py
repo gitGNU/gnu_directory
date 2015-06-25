@@ -376,7 +376,7 @@ def export_all_to_directory(data, outputdir):
                 # Force errors.
                 templates = list(templates)
             except ExportFailure, e:
-                warn('export failed: %s: %s' % (name, e.message))
+                warn('export failed: %s: %s' % (name.encode('utf-8').strip(), e.message.encode('utf-8').strip()))
 
             yield(name, templates)
 

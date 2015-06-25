@@ -17,7 +17,7 @@ def main():
             # Force errors.
             templates = list(templates)
         except export.ExportFailure, e:
-            export.warn('export failed: %s: %s' % (name, e.message))
+            export.warn('export failed: %s: %s' % (name.encode('utf-8').strip(), e.message.encode('utf-8').strip()))
 
         for template in templates:
             tname = template.name
