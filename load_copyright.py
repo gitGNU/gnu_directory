@@ -83,6 +83,8 @@ def import_one(pkgname, fh):
         header['Upstream-Name'] = \
             header['Upstream-Name'].replace(u'\xa0', ' ')
             #copy_summary['Upstream-Name'].replace('\xc2\xa0', ' ')
+        if '@' in header['Upstream-Name']:
+            header['Upstream-Name'] = pkgname
 
     copy_summary = pd.DataFrame([header])
     #print copy_summary.T.to_string()
