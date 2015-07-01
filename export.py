@@ -60,6 +60,10 @@ class PkgData(object):
         self.licenses = cp_store['licenses']
         cp_store.close()
 
+        cl_store = pd.HDFStore('cl.h5')
+        self.cl = cl_store['cl_versions']
+        cl_store.close()
+
 def nouni(s):
     return s.encode('utf8') if isinstance(s, unicode) else s
 
@@ -122,7 +126,7 @@ def get_license_map():
 
     return map
 
-def srcpkg_extract_licenses(header, filess, licenses):
+def srcpkg_extract_licenses(header, filess, licenses, cl_date, cl_uploader):
     # XXX: generate template from header stanza
     # XXX: flag CC licenses
     # XXX: check all License stanzas were included
@@ -174,8 +178,8 @@ def srcpkg_extract_licenses(header, filess, licenses):
         yield Template('Project license', [
             ('License', canon),
             ('License copyright', cp),
-            ('License verified by', 'Debian'),
-            ('License verified date', today()),
+            ('License verified by', 'Debian: %s' % cl_uploader),
+            ('License verified date', cl_date),
             ('License note', txt)])
 
 def parse_person(s):
@@ -284,8 +288,11 @@ def export_srcpkgs(data, name, srcpkg_names):
         people.extend(list(extract_people(pkg_cps)))
         res.extend(list(extract_resources(pkg_cps)))
 
+        pkg_cl = data.cl[data.cl['_srcpkg'] == srcpkg]
+        cl_date = pkg_cl['date'][0]
+        cl_uploader = pkg_cl['author'][0]
         for template in srcpkg_extract_licenses(
-                pkg_cps, pkg_cpf, pkg_licenses):
+                pkg_cps, pkg_cpf, pkg_licenses, cl_date, cl_uploader):
             # XXX: eliminate duplicates
             yield template
 
