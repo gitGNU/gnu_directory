@@ -46,6 +46,8 @@ def read_copyright(fh):
             del d['Licence']
 
         if type == 'Files':
+            if 'debian' in d['Files']:
+                continue
             if 'License' not in d:
                 raise ValueError('no license: ' + repr(d))
                 return
