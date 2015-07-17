@@ -19,7 +19,7 @@ def import_one(pkgname, fh):
 def get_pkgname(path):
     (dir, base) = os.path.split(path)
 
-    if base in ('current', 'changelog.txt'):
+    if base in ('current', 'stable_changelog'):
         return get_pkgname(dir)
     else:
         return base
