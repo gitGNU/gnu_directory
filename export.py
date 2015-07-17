@@ -165,7 +165,7 @@ def srcpkg_extract_licenses(header, filess, licenses, cl_date, cl_uploader):
         canon = lmap.get(ldesc.lower(), 'Other')
         # XXX: Should maybe bail if there's no copyright field.
         cp = ''.join(
-            u'© %s\n' % line.lstrip()
+            u'Copyright %s' % line.lstrip()
             for line in files.dropna().get('Copyright', '').splitlines())
         cp = cp.encode('utf8')
         txt = txt.encode('utf8')
