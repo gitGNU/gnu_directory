@@ -141,7 +141,7 @@ def srcpkg_extract_licenses(header, filess, licenses, cl_date, cl_uploader):
         for (_idx, s) in licenses.iterrows()])
 
     for (_ix, files) in filess.iterrows():
-        ldesc = files['_license'].strip()
+        ldesc = files['_license'].strip().lower()
         ltext = files['License']
 
         if '\n' in ltext:
@@ -160,13 +160,7 @@ def srcpkg_extract_licenses(header, filess, licenses, cl_date, cl_uploader):
             missing = set(lnames) - set(by_name.keys())
 
             if missing:
-                raise ExportFailure(
-                    'missing license text: ' + ', '.join(missing))
-
-            ltext = '\n'.join('%s:\n\n%s' %
-                    (lname, indent(munge_description(by_name[lname])))
-                for lname in lnames)
-            txt = 'License: %s\n\n%s' % (parsed, ltext)
+                txt = 'License: %s' % (parsed)
 
         canon = lmap.get(ldesc.lower(), 'Other')
         # XXX: Should maybe bail if there's no copyright field.
