@@ -194,8 +194,7 @@ def extract_people(df):
         yield Template('Person', [
             ('Real name', name),
             ('Role', 'contact'),
-            ('Email', email),
-            ('Resource URL', '')])
+            ('Email', email)])
 
 def extract_resources(cp_header):
     cp_header = cp_header.dropna()
