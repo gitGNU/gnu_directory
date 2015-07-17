@@ -52,6 +52,7 @@ class PkgData(object):
         pkg_store = pd.HDFStore('pkg.h5')
         self.pkgs = pkg_store['packages']
         self.descs = pkg_store['descriptions']
+        self.srcs = pkg_store['sources']
         pkg_store.close()
 
         cp_store = pd.HDFStore('cp.h5')
@@ -224,6 +225,15 @@ def export_srcpkgs(data, name, srcpkg_names):
         for srcpkg in srcpkg_names])
     versions = {}
 
+    srcfiles=""
+    for srcpkg in srcpkg_names:
+        srcfile = data.srcs[data.srcs['_srcpkg'] == srcpkg]['srcfile'].values[0]
+        letter = srcfile[0]
+        if srcfile[:3] == 'lib':
+            letter = srcfile[:4]
+        srcfile = 'http://ftp.debian.org/debian/pool/main/%s/%s/%s' % (letter,srcpkg,srcfile)
+        srcfiles = srcfiles + srcfile + " "
+
     for (_i, pkg) in binpkgs.iterrows():
         versions[pkg['_srcpkg']] = pkg['Version']
 
@@ -267,6 +277,8 @@ def export_srcpkgs(data, name, srcpkg_names):
         ('Computer languages', ', '.join(langs)),
         ('Status', ''),
         ('Is GNU', 'No'),
+        ('Version identifier', pkg['Version']),
+        ('Version download', srcfiles),
         ('Submitted by', 'Debian import'),
         ('Submitted date', today())])
 
