@@ -76,6 +76,8 @@ def import_one(pkgname, fh):
         #print 'err:', repr(e)
         return None
 
+    if licences == []:
+        return None
     header['_srcpkg'] = pkgname
     header['_license'] = header.get('License', '').split('\n')[0]
 
