@@ -107,7 +107,7 @@ def import_one(pkgname, fh):
 def get_pkgname(path):
     (dir, base) = os.path.split(path)
 
-    if base in ('current', 'copyright'):
+    if base in ('current', 'stable_copyright'):
         return get_pkgname(dir)
     else:
         return base
